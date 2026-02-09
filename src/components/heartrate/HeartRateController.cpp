@@ -1,4 +1,5 @@
 #include "components/heartrate/HeartRateController.h"
+#include "components/heartrate/HeartRateLogger.h"
 #include <heartratetask/HeartRateTask.h>
 #include <systemtask/SystemTask.h>
 
@@ -9,6 +10,9 @@ void HeartRateController::Update(HeartRateController::States newState, uint8_t h
   if (this->heartRate != heartRate) {
     this->heartRate = heartRate;
     service->OnNewHeartRateValue(heartRate);
+  }
+  if (newState == States::Running && heartRate > 0 && logger != nullptr) {
+    logger->AddMeasurement(heartRate);
   }
 }
 
@@ -32,4 +36,8 @@ void HeartRateController::SetHeartRateTask(Pinetime::Applications::HeartRateTask
 
 void HeartRateController::SetService(Pinetime::Controllers::HeartRateService* service) {
   this->service = service;
+}
+
+void HeartRateController::SetLogger(Pinetime::Controllers::HeartRateLogger* logger) {
+  this->logger = logger;
 }

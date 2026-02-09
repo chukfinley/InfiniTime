@@ -5,6 +5,7 @@
 #include "BootloaderVersion.h"
 #include "components/battery/BatteryController.h"
 #include "components/ble/BleController.h"
+#include "components/heartrate/HeartRateController.h"
 #include "displayapp/TouchEvents.h"
 #include "drivers/Cst816s.h"
 #include "drivers/St7789.h"
@@ -41,6 +42,7 @@ SystemTask::SystemTask(Drivers::SpiMaster& spi,
                        Controllers::DateTime& dateTimeController,
                        Controllers::StopWatchController& stopWatchController,
                        Controllers::AlarmController& alarmController,
+                       Controllers::SmartAlarmController& smartAlarmController,
                        Drivers::Watchdog& watchdog,
                        Pinetime::Controllers::NotificationManager& notificationManager,
                        Pinetime::Drivers::Hrs3300& heartRateSensor,
@@ -52,7 +54,8 @@ SystemTask::SystemTask(Drivers::SpiMaster& spi,
                        Pinetime::Applications::HeartRateTask& heartRateApp,
                        Pinetime::Controllers::FS& fs,
                        Pinetime::Controllers::TouchHandler& touchHandler,
-                       Pinetime::Controllers::ButtonHandler& buttonHandler)
+                       Pinetime::Controllers::ButtonHandler& buttonHandler,
+                       Pinetime::Controllers::HeartRateLogger& heartRateLogger)
   : spi {spi},
     spiNorFlash {spiNorFlash},
     twiMaster {twiMaster},
@@ -62,6 +65,7 @@ SystemTask::SystemTask(Drivers::SpiMaster& spi,
     dateTimeController {dateTimeController},
     stopWatchController {stopWatchController},
     alarmController {alarmController},
+    smartAlarmController {smartAlarmController},
     watchdog {watchdog},
     notificationManager {notificationManager},
     heartRateSensor {heartRateSensor},
@@ -74,6 +78,7 @@ SystemTask::SystemTask(Drivers::SpiMaster& spi,
     fs {fs},
     touchHandler {touchHandler},
     buttonHandler {buttonHandler},
+    heartRateLogger {heartRateLogger},
     nimbleController(*this,
                      bleController,
                      dateTimeController,
@@ -130,6 +135,9 @@ void SystemTask::Work() {
   batteryController.Register(this);
   motionSensor.SoftReset();
   alarmController.Init(this);
+  heartRateLogger.Init();
+  heartRateController.SetLogger(&heartRateLogger);
+  smartAlarmController.Init(this);
 
   // Reset the TWI device because the motion sensor chip most probably crashed it...
   twiMaster.Sleep();
@@ -222,6 +230,9 @@ void SystemTask::Work() {
           if (alarmController.IsEnabled()) {
             alarmController.ScheduleAlarm();
           }
+          if (smartAlarmController.IsEnabled()) {
+            smartAlarmController.ScheduleAlarm();
+          }
           break;
         case Messages::OnNewNotification:
           if (settingsController.GetNotificationStatus() == Pinetime::Controllers::Settings::Notification::On) {
@@ -234,6 +245,10 @@ void SystemTask::Work() {
         case Messages::SetOffAlarm:
           GoToRunning();
           displayApp.PushMessage(Pinetime::Applications::Display::Messages::AlarmTriggered);
+          break;
+        case Messages::SetOffSmartAlarm:
+          GoToRunning();
+          displayApp.PushMessage(Pinetime::Applications::Display::Messages::SmartAlarmTriggered);
           break;
         case Messages::BleConnected:
           displayApp.PushMessage(Pinetime::Applications::Display::Messages::NotifyDeviceActivity);

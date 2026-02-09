@@ -35,6 +35,8 @@
 #include "components/motor/MotorController.h"
 #include "components/datetime/DateTimeController.h"
 #include "components/heartrate/HeartRateController.h"
+#include "components/heartrate/HeartRateLogger.h"
+#include "components/alarm/SmartAlarmController.h"
 #include "components/stopwatch/StopWatchController.h"
 #include "components/fs/FS.h"
 #include "drivers/Spi.h"
@@ -107,6 +109,8 @@ Pinetime::Controllers::NotificationManager notificationManager;
 Pinetime::Controllers::MotionController motionController;
 Pinetime::Controllers::StopWatchController stopWatchController;
 Pinetime::Controllers::AlarmController alarmController {dateTimeController, fs};
+Pinetime::Controllers::HeartRateLogger heartRateLogger {fs, dateTimeController};
+Pinetime::Controllers::SmartAlarmController smartAlarmController {dateTimeController, fs, heartRateLogger, settingsController};
 Pinetime::Controllers::TouchHandler touchHandler;
 Pinetime::Controllers::ButtonHandler buttonHandler;
 Pinetime::Controllers::BrightnessController brightnessController {};
@@ -124,10 +128,12 @@ Pinetime::Applications::DisplayApp displayApp(lcd,
                                               motionController,
                                               stopWatchController,
                                               alarmController,
+                                              smartAlarmController,
                                               brightnessController,
                                               touchHandler,
                                               fs,
-                                              spiNorFlash);
+                                              spiNorFlash,
+                                              heartRateLogger);
 
 Pinetime::System::SystemTask systemTask(spi,
                                         spiNorFlash,
@@ -138,6 +144,7 @@ Pinetime::System::SystemTask systemTask(spi,
                                         dateTimeController,
                                         stopWatchController,
                                         alarmController,
+                                        smartAlarmController,
                                         watchdog,
                                         notificationManager,
                                         heartRateSensor,
@@ -149,7 +156,8 @@ Pinetime::System::SystemTask systemTask(spi,
                                         heartRateApp,
                                         fs,
                                         touchHandler,
-                                        buttonHandler);
+                                        buttonHandler,
+                                        heartRateLogger);
 int mallocFailedCount = 0;
 int stackOverflowCount = 0;
 extern "C" {

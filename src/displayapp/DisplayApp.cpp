@@ -4,6 +4,10 @@
 #include "displayapp/screens/Motion.h"
 #include "displayapp/screens/Timer.h"
 #include "displayapp/screens/Alarm.h"
+#include "displayapp/screens/SmartAlarm.h"
+#include "displayapp/screens/HeartRateLog.h"
+#include "components/alarm/SmartAlarmController.h"
+#include "components/heartrate/HeartRateLogger.h"
 #include "components/battery/BatteryController.h"
 #include "components/ble/BleController.h"
 #include "components/datetime/DateTimeController.h"
@@ -88,10 +92,12 @@ DisplayApp::DisplayApp(Drivers::St7789& lcd,
                        Pinetime::Controllers::MotionController& motionController,
                        Pinetime::Controllers::StopWatchController& stopWatchController,
                        Pinetime::Controllers::AlarmController& alarmController,
+                       Pinetime::Controllers::SmartAlarmController& smartAlarmController,
                        Pinetime::Controllers::BrightnessController& brightnessController,
                        Pinetime::Controllers::TouchHandler& touchHandler,
                        Pinetime::Controllers::FS& filesystem,
-                       Pinetime::Drivers::SpiNorFlash& spiNorFlash)
+                       Pinetime::Drivers::SpiNorFlash& spiNorFlash,
+                       Pinetime::Controllers::HeartRateLogger& heartRateLogger)
   : lcd {lcd},
     touchPanel {touchPanel},
     batteryController {batteryController},
@@ -105,10 +111,12 @@ DisplayApp::DisplayApp(Drivers::St7789& lcd,
     motionController {motionController},
     stopWatchController {stopWatchController},
     alarmController {alarmController},
+    smartAlarmController {smartAlarmController},
     brightnessController {brightnessController},
     touchHandler {touchHandler},
     filesystem {filesystem},
     spiNorFlash {spiNorFlash},
+    heartRateLogger {heartRateLogger},
     lvgl {lcd, filesystem},
     timer(this, TimerCallback),
     controllers {batteryController,
@@ -121,6 +129,7 @@ DisplayApp::DisplayApp(Drivers::St7789& lcd,
                  motionController,
                  stopWatchController,
                  alarmController,
+                 smartAlarmController,
                  brightnessController,
                  nullptr,
                  filesystem,
@@ -129,7 +138,8 @@ DisplayApp::DisplayApp(Drivers::St7789& lcd,
                  this,
                  lvgl,
                  nullptr,
-                 nullptr} {
+                 nullptr,
+                 heartRateLogger} {
 }
 
 void DisplayApp::Start(System::BootErrors error) {
@@ -390,6 +400,14 @@ void DisplayApp::Refresh() {
           alarm->SetAlerting();
         } else {
           LoadNewScreen(Apps::Alarm, DisplayApp::FullRefreshDirections::None);
+        }
+        break;
+      case Messages::SmartAlarmTriggered:
+        if (currentApp == Apps::SmartAlarm) {
+          auto* smartAlarm = static_cast<Screens::SmartAlarm*>(currentScreen.get());
+          smartAlarm->SetAlerting();
+        } else {
+          LoadNewScreen(Apps::SmartAlarm, DisplayApp::FullRefreshDirections::None);
         }
         break;
       case Messages::ShowPairingKey:

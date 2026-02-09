@@ -45,6 +45,8 @@ namespace Pinetime {
       SettingShakeThreshold,
       SettingBluetooth,
       SettingOTA,
+      HeartRateLog,
+      SmartAlarm,
       Error
     };
 

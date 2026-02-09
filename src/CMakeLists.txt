@@ -396,6 +396,8 @@ list(APPEND SOURCE_FILES
         displayapp/screens/PassKey.cpp
         displayapp/screens/Error.cpp
         displayapp/screens/Alarm.cpp
+        displayapp/screens/HeartRateLog.cpp
+        displayapp/screens/SmartAlarm.cpp
         displayapp/screens/Styles.cpp
         displayapp/screens/WeatherSymbols.cpp
         displayapp/Colors.cpp
@@ -472,6 +474,8 @@ list(APPEND SOURCE_FILES
         components/timer/Timer.cpp
         components/stopwatch/StopWatchController.cpp
         components/alarm/AlarmController.cpp
+        components/alarm/SmartAlarmController.cpp
+        components/heartrate/HeartRateLogger.cpp
         components/fs/FS.cpp
         drivers/Cst816s.cpp
         FreeRTOS/port.c
